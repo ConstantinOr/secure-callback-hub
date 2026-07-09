@@ -2,7 +2,8 @@ FROM node:20-bookworm-slim
 
 WORKDIR /app
 
-RUN corepack enable
+ENV PNPM_VERSION=10.6.2
+RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile

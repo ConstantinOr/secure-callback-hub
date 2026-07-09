@@ -80,6 +80,20 @@ docker compose --profile app up --build
 
 The app container runs migrations before starting `node dist/main`.
 
+### Full HTTP smoke against Docker
+
+One command builds/starts Postgres + Jaeger + app, waits until healthy, then runs register → login → profile → PSP accept/duplicate → cross-brand isolation → GSP:
+
+```bash
+pnpm smoke:docker
+```
+
+If the stack is already up:
+
+```bash
+pnpm smoke
+```
+
 ## Tests
 
 Unit tests:
@@ -109,6 +123,8 @@ pnpm test:e2e
 ```bash
 pnpm dev:setup        # docker compose up -d + migrations
 pnpm dev              # setup + start:dev
+pnpm smoke:docker     # docker app + full HTTP smoke flow
+pnpm smoke            # HTTP smoke against already-running app
 pnpm migration:run
 pnpm migration:revert
 pnpm lint

@@ -5,6 +5,7 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "packageManager": "pnpm@10.6.2",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -24,7 +25,9 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --watchman=false --config ./test/jest-e2e.json"
+    "test:e2e": "jest --watchman=false --config ./test/jest-e2e.json",
+    "smoke": "bash scripts/smoke-flow.sh",
+    "smoke:docker": "docker compose --profile app up -d --build --wait && bash scripts/smoke-flow.sh"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
