@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: secure-callback-hub-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-callback_hub}
+      POSTGRES_USER: ${POSTGRES_USER:-callback_hub_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-callback_hub_password}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-callback_hub_user} -d ${POSTGRES_DB:-callback_hub}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: secure-callback-hub-jaeger
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: 'true'
+    ports:
+      - '${JAEGER_UI_PORT:-16686}:16686'
+      - '${OTEL_COLLECTOR_HTTP_PORT:-4318}:4318'
+      - '${OTEL_COLLECTOR_GRPC_PORT:-4317}:4317'
+
+  app:
+    build: .
+    container_name: secure-callback-hub-app
+    profiles: ['app']
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      jaeger:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-callback_hub}
+      POSTGRES_USER: ${POSTGRES_USER:-callback_hub_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-callback_hub_password}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-24}
+      OTEL_SERVICE_NAME: secure-callback-hub
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://jaeger:4318/v1/traces
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+    ports:
+      - '${APP_PORT:-3000}:3000'
+
+volumes:
+  postgres_data:
