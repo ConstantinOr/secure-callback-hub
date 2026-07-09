@@ -22,6 +22,10 @@ The service emits structured logs via pino and includes trace context when avail
 
 PSP/GSP adapters intentionally do **not** verify provider signatures in this MVP. The assignment asks for callback stubs that persist raw payloads with tenant isolation and idempotency. Signature verification (HMAC/JWT per provider) is deferred until real provider credentials and rotation policy are introduced.
 
+## Webhook rate limiting
+
+Callback routes use `@SkipThrottle()`. Global IP throttling is appropriate for identity endpoints, but PSP/GSP providers retry aggressively; returning `429` before persistence would defeat idempotent ingest. Abuse protection for public webhooks should come from signature verification and/or a dedicated high-limit bucket once providers are real.
+
 ## Session cleanup
 
 Expired and revoked sessions are **not deleted automatically** by the application today. The `resolveSession` method rejects them at validation time, but rows remain in the `sessions` table indefinitely. A scheduled cleanup job (e.g., a NestJS cron task or an external scheduler running `DELETE FROM sessions WHERE expires_at < NOW() OR revoked_at IS NOT NULL`) should be added before the table grows unbounded in production.

@@ -15,6 +15,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { isUUID } from 'class-validator';
 import type { Request } from 'express';
 import { CORRELATION_ID_HEADER } from '../common/middleware/correlation-id.middleware';
@@ -30,7 +31,8 @@ interface CallbackBody {
   [key: string]: unknown;
 }
 
-const MAX_PROVIDER_LENGTH = 64;
+/** Fits `idempotency_keys.scope` varchar(64): "PSP:" / "GSP:" (4) + provider. */
+const MAX_PROVIDER_LENGTH = 60;
 const MAX_EXTERNAL_EVENT_ID_LENGTH = 128;
 const PROVIDER_PATTERN = /^[a-zA-Z0-9._-]+$/;
 
@@ -121,6 +123,7 @@ const sanitizeHeaders = (headers: Request['headers']): RawEventHeaders => {
 };
 
 @ApiTags('callbacks')
+@SkipThrottle()
 @Controller('webhooks')
 export class CallbacksController {
   constructor(private readonly callbacksService: CallbacksService) {}

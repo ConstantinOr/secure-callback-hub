@@ -1,4 +1,8 @@
-import { CorrelationIdMiddleware } from './correlation-id.middleware';
+import {
+  CorrelationIdMiddleware,
+  MAX_CORRELATION_ID_LENGTH,
+  resolveCorrelationId,
+} from './correlation-id.middleware';
 
 describe('CorrelationIdMiddleware', () => {
   it('reuses a provided correlation id and sets response/trace headers', () => {
@@ -41,5 +45,13 @@ describe('CorrelationIdMiddleware', () => {
       req.headers['x-correlation-id'],
     );
     expect(next).toHaveBeenCalled();
+  });
+
+  it('truncates oversized correlation ids to the DB column limit', () => {
+    const oversized = 'c'.repeat(MAX_CORRELATION_ID_LENGTH + 40);
+
+    expect(resolveCorrelationId(oversized)).toHaveLength(
+      MAX_CORRELATION_ID_LENGTH,
+    );
   });
 });

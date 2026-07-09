@@ -5,10 +5,17 @@ import { NextFunction, Request, Response } from 'express';
 
 export const CORRELATION_ID_HEADER = 'x-correlation-id';
 
+/** Matches `raw_events.correlation_id` varchar(128). */
+export const MAX_CORRELATION_ID_LENGTH = 128;
+
 export const resolveCorrelationId = (value?: string): string => {
   const normalized = value?.trim();
 
-  return normalized && normalized.length > 0 ? normalized : randomUUID();
+  if (!normalized) {
+    return randomUUID();
+  }
+
+  return normalized.slice(0, MAX_CORRELATION_ID_LENGTH);
 };
 
 @Injectable()

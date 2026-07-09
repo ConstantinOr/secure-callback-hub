@@ -103,13 +103,21 @@ Required headers:
 x-brand-id: 550e8400-e29b-41d4-a716-446655440000
 ```
 
+Required headers:
+
+```http
+x-brand-id: 550e8400-e29b-41d4-a716-446655440000
+```
+
 Optional headers:
 
 ```http
 x-correlation-id: request-correlation-id
 ```
 
-If `x-correlation-id` is missing, the service generates one, returns it as a response header on every route, and echoes it in the webhook JSON body.
+If `x-correlation-id` is missing, the service generates one, returns it as a response header on every route, and echoes it in the webhook JSON body. Values longer than 128 characters are truncated to fit storage.
+
+`:provider` must be ≤ 60 characters (`[a-zA-Z0-9._-]`) so `PSP|GSP:{provider}` fits the idempotency scope column. `eventId` must be ≤ 128 characters.
 
 Accepted callbacks persist the raw JSON payload plus sanitized request headers for later processing.
 

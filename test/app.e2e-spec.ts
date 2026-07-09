@@ -124,6 +124,35 @@ describe('Secure Callback Hub (e2e)', () => {
       .expect(400);
   });
 
+  it('rejects providers that would overflow the idempotency scope column', async () => {
+    await request(server)
+      .post(`/webhooks/psp/${'p'.repeat(61)}`)
+      .set('x-brand-id', brandA)
+      .send({ eventId: 'evt_long_provider', type: 'payment.succeeded' })
+      .expect(400);
+  });
+
+  it('truncates oversized correlation ids before persisting callbacks', async () => {
+    const oversizedCorrelationId = `corr-${'x'.repeat(200)}`;
+
+    const response = await request(server)
+      .post('/webhooks/psp/stripe')
+      .set('x-brand-id', brandA)
+      .set('x-correlation-id', oversizedCorrelationId)
+      .send({ eventId: 'evt_long_corr', type: 'payment.succeeded' })
+      .expect(201);
+
+    const body = response.body as WebhookResponseBody;
+    expect(body.correlationId).toHaveLength(128);
+    expect(response.headers['x-correlation-id']).toHaveLength(128);
+
+    const storedEvent = await rawEvents.findOneByOrFail({
+      brandId: brandA,
+      externalEventId: 'evt_long_corr',
+    });
+    expect(storedEvent.correlationId).toHaveLength(128);
+  });
+
   it('persists unknown event type when callbacks omit the type discriminator', async () => {
     const payload = {
       eventId: 'evt_without_type',
